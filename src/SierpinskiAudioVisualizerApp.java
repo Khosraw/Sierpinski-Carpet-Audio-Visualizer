@@ -1,3 +1,26 @@
+/**
+ * SierpinskiAudioVisualizerApp.java
+ * Entry point for the Sierpinski's Carpet Audio Visualizer application.
+ * This class creates a GUI for the user to select an audio file and the number of bands for the
+ * audio visualizer. When the user clicks the "Start Visualization" button, the audio file is
+ * processed and the audio visualizer is displayed. The audio visualizer consists of a fractal
+ * image for each band, where the depth of the fractal is determined by the volume of the audio
+ * in that band.
+ *
+ * @version 1.0
+ * @author Khosraw Azizi
+ * @since 2024-10-16
+ * @see AudioProcessor
+ * @see VisualizerPanel
+ * @see Constants
+ * @see FractalGenerator
+ * @see AudioUtils
+ * @see FFT
+ * Email: khosraw.azizi@gmail.com
+ * GitHub: github.com/khosraw
+ * LinkedIn: linkedin.com/in/khosraw-azizi
+ */
+
 import javax.swing.*;
 import java.awt.*;
 
