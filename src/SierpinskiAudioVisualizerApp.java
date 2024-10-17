@@ -8,7 +8,7 @@
  * in that band.
  *
  * @version 1.0
- * @author Khosraw Azizi
+ * @author Khosraw Azizi <UT CS>
  * @since 2024-10-16
  * @see AudioProcessor
  * @see VisualizerPanel
