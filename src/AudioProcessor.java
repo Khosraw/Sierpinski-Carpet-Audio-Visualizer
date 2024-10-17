@@ -6,13 +6,17 @@ import java.util.concurrent.*;
 
 public class AudioProcessor {
 
-    private final double[] smoothedVolumeLevels = new double[Constants.NUM_BANDS];
-    private final double[] maxVolumes = new double[Constants.NUM_BANDS];
-    private final double[] minVolumes = new double[Constants.NUM_BANDS];
+    private final double[] smoothedVolumeLevels;
+    private final double[] maxVolumes;
+    private final double[] minVolumes;
     private final VisualizerPanel visualizerPanel;
 
     public AudioProcessor(VisualizerPanel visualizerPanel) {
         this.visualizerPanel = visualizerPanel;
+        int numBands = Constants.getNumBands();
+        smoothedVolumeLevels = new double[numBands];
+        maxVolumes = new double[numBands];
+        minVolumes = new double[numBands];
     }
 
     public void preprocessAudio(String filename) throws UnsupportedAudioFileException, IOException {
@@ -20,8 +24,12 @@ public class AudioProcessor {
         AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
         AudioFormat format = audioStream.getFormat();
 
-        List<Double>[] bandVolumes = new ArrayList[Constants.NUM_BANDS];
-        for (int i = 0; i < Constants.NUM_BANDS; i++) {
+        int numBands = Constants.getNumBands();
+        double[] bandFreqLow = Constants.getBandFreqLow();
+        double[] bandFreqHigh = Constants.getBandFreqHigh();
+
+        List<Double>[] bandVolumes = new ArrayList[numBands];
+        for (int i = 0; i < numBands; i++) {
             bandVolumes[i] = new ArrayList<>();
         }
 
@@ -31,15 +39,19 @@ public class AudioProcessor {
             double[] samples = AudioUtils.bytesToSamples(bytesBuffer, bytesRead, format);
             double[] magnitudes = FFT.computeFFT(samples);
 
-            for (int i = 0; i < Constants.NUM_BANDS; i++) {
-                double volume = AudioUtils.getVolumeInBand(magnitudes, format.getSampleRate(),
-                        Constants.BAND_FREQ_LOW[i], Constants.BAND_FREQ_HIGH[i]);
+            for (int i = 0; i < numBands; i++) {
+                double volume = AudioUtils.getVolumeInBand(
+                    magnitudes,
+                    format.getSampleRate(),
+                    bandFreqLow[i],
+                    bandFreqHigh[i]
+                );
                 bandVolumes[i].add(volume);
             }
         }
         audioStream.close();
 
-        for (int i = 0; i < Constants.NUM_BANDS; i++) {
+        for (int i = 0; i < numBands; i++) {
             List<Double> volumes = bandVolumes[i];
             maxVolumes[i] = Collections.max(volumes);
             Collections.sort(volumes);
@@ -58,28 +70,38 @@ public class AudioProcessor {
         audioLine.open(format);
         audioLine.start();
 
+        int numBands = Constants.getNumBands();
+        double[] bandFreqLow = Constants.getBandFreqLow();
+        double[] bandFreqHigh = Constants.getBandFreqHigh();
+
         byte[] bytesBuffer = new byte[Constants.BUFFER_SIZE];
         int bytesRead;
         double alpha = 0.1;
 
-        ExecutorService executor = Executors.newFixedThreadPool(Constants.NUM_BANDS);
+        ExecutorService executor = Executors.newFixedThreadPool(numBands);
 
         while ((bytesRead = audioStream.read(bytesBuffer)) != -1) {
             double[] samples = AudioUtils.bytesToSamples(bytesBuffer, bytesRead, format);
             double[] magnitudes = FFT.computeFFT(samples);
 
-            CountDownLatch latch = new CountDownLatch(Constants.NUM_BANDS);
+            CountDownLatch latch = new CountDownLatch(numBands);
 
-            for (int i = 0; i < Constants.NUM_BANDS; i++) {
+            for (int i = 0; i < numBands; i++) {
                 final int bandIndex = i;
                 executor.submit(() -> {
-                    double volume = AudioUtils.getVolumeInBand(magnitudes, format.getSampleRate(),
-                            Constants.BAND_FREQ_LOW[bandIndex],
-                            Constants.BAND_FREQ_HIGH[bandIndex]);
+                    double volume = AudioUtils.getVolumeInBand(
+                        magnitudes,
+                        format.getSampleRate(),
+                        bandFreqLow[bandIndex],
+                        bandFreqHigh[bandIndex]
+                    );
                     smoothedVolumeLevels[bandIndex] = alpha * volume + (1 - alpha) *
                             smoothedVolumeLevels[bandIndex];
-                    int depth = AudioUtils.mapVolumeToDepth(smoothedVolumeLevels[bandIndex],
-                            minVolumes[bandIndex], maxVolumes[bandIndex]);
+                    int depth = AudioUtils.mapVolumeToDepth(
+                        smoothedVolumeLevels[bandIndex],
+                        minVolumes[bandIndex],
+                        maxVolumes[bandIndex]
+                    );
 
                     visualizerPanel.updateFractalImage(bandIndex, depth);
 
