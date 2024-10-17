@@ -47,7 +47,12 @@ This project combines the mathematical beauty of fractals with audio processing 
 
 ## Demo
 
-*(Include screenshots or GIFs of the application in action here.)*
+![java_Nzlpndz1rI](https://github.com/user-attachments/assets/90aff51c-ac37-49e9-a57a-38379314004d)
+
+### Video Demos
+
+[![Video Demo with Mirror](https://img.youtube.com/vi/xPvMeuJt9Y8/0.jpg)](https://www.youtube.com/watch?v=xPvMeuJt9Y8)
+[![Video Demo with Nightcrawler](https://img.youtube.com/vi/3m4foD8TZnE/0.jpg)](https://www.youtube.com/watch?v=3m4foD8TZnE)
 
 ## Installation
 
