@@ -33,10 +33,7 @@ public class SierpinskiAudioVisualizerApp {
 
         frame.add(inputPanel, BorderLayout.NORTH);
 
-        VisualizerPanel visualizerPanel = new VisualizerPanel();
-        frame.add(visualizerPanel, BorderLayout.CENTER);
-
-        frame.setSize(1100, 1100);
+        frame.setSize(1000, 1100);
         frame.setVisible(true);
 
         final String[] selectedFile = new String[1];
@@ -59,6 +56,10 @@ public class SierpinskiAudioVisualizerApp {
             int numBands = (Integer) bandSpinner.getValue();
             Constants.setNumBands(numBands);
 
+            VisualizerPanel visualizerPanel = new VisualizerPanel(numBands);
+            frame.add(visualizerPanel, BorderLayout.CENTER);
+            frame.revalidate();
+            frame.repaint();
             new Thread(() -> {
                 try {
                     AudioProcessor audioProcessor = new AudioProcessor(visualizerPanel);
