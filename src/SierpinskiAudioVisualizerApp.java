@@ -30,7 +30,7 @@ public class SierpinskiAudioVisualizerApp {
         JFrame frame = new JFrame("Sierpinski's Carpet Audio Visualizer");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        JPanel inputPanel = new JPanel(new GridLayout(3, 1));
+        JPanel inputPanel = new JPanel(new GridLayout(5, 1));
 
         JButton fileButton = new JButton("Choose Audio File");
         JTextField fileTextField = new JTextField(30);
@@ -49,10 +49,15 @@ public class SierpinskiAudioVisualizerApp {
         bandPanel.add(bandSpinner);
 
         JButton startButton = new JButton("Start Visualization");
+        JButton liveModeButton = new JButton("Start Live Visualization");
+        JButton stopButton = new JButton("Stop Visualization");
+        stopButton.setEnabled(false);
 
         inputPanel.add(filePanel);
         inputPanel.add(bandPanel);
         inputPanel.add(startButton);
+        inputPanel.add(liveModeButton);
+        inputPanel.add(stopButton);
 
         frame.add(inputPanel, BorderLayout.NORTH);
 
@@ -60,6 +65,7 @@ public class SierpinskiAudioVisualizerApp {
         frame.setVisible(true);
 
         final String[] selectedFile = new String[1];
+        final AudioProcessor[] audioProcessor = new AudioProcessor[1];
 
         fileButton.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
@@ -76,6 +82,10 @@ public class SierpinskiAudioVisualizerApp {
                 return;
             }
 
+            if (audioProcessor[0] != null) {
+                audioProcessor[0].stop();
+            }
+
             int numBands = (Integer) bandSpinner.getValue();
             Constants.setNumBands(numBands);
 
@@ -83,19 +93,66 @@ public class SierpinskiAudioVisualizerApp {
             frame.add(visualizerPanel, BorderLayout.CENTER);
             frame.revalidate();
             frame.repaint();
-            new Thread(() -> {
+
+            Thread audioThread = new Thread(() -> {
                 try {
-                    AudioProcessor audioProcessor = new AudioProcessor(visualizerPanel);
-                    audioProcessor.preprocessAudio(selectedFile[0]);
-                    audioProcessor.processAudio(selectedFile[0]);
+                    audioProcessor[0] = new AudioProcessor(visualizerPanel);
+                    audioProcessor[0].preprocessAudio(selectedFile[0]);
+                    audioProcessor[0].processAudio(selectedFile[0]);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
-            }).start();
+            });
+
+            audioThread.start();
 
             fileButton.setEnabled(false);
             bandSpinner.setEnabled(false);
             startButton.setEnabled(false);
+            liveModeButton.setEnabled(false);
+            stopButton.setEnabled(true);
+        });
+
+        liveModeButton.addActionListener(e -> {
+            if (audioProcessor[0] != null) {
+                audioProcessor[0].stop();
+            }
+
+            int numBands = (Integer) bandSpinner.getValue();
+            Constants.setNumBands(numBands);
+
+            VisualizerPanel visualizerPanel = new VisualizerPanel(numBands);
+            frame.add(visualizerPanel, BorderLayout.CENTER);
+            frame.revalidate();
+            frame.repaint();
+
+            Thread liveThread = new Thread(() -> {
+                try {
+                    audioProcessor[0] = new AudioProcessor(visualizerPanel);
+                    audioProcessor[0].processLiveAudio();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+
+            liveThread.start();
+
+            fileButton.setEnabled(false);
+            bandSpinner.setEnabled(false);
+            startButton.setEnabled(false);
+            liveModeButton.setEnabled(false);
+            stopButton.setEnabled(true);
+        });
+
+        stopButton.addActionListener(e -> {
+            if (audioProcessor[0] != null) {
+                audioProcessor[0].stop();
+            }
+            fileButton.setEnabled(true);
+            bandSpinner.setEnabled(true);
+            startButton.setEnabled(true);
+            liveModeButton.setEnabled(true);
+            stopButton.setEnabled(false);
         });
     }
 }
